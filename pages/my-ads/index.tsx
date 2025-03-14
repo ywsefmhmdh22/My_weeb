@@ -2,19 +2,33 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { db } from "@/utils/firebaseConfig"; // تأكد من إعداد فايربيز في firebaseConfig.ts
+import { db } from "@/utils/firebaseConfig";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 
+// ✅ تعريف نوع البيانات الخاصة بالإعلانات
+type Ad = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  price: number;
+  currency: string;
+  views: number;
+  posted: string;
+};
+
 export default function MyAds() {
-  const [ads, setAds] = useState<any[]>([]);
+  const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ جلب الإعلانات من Firestore
   useEffect(() => {
     const fetchAds = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "ads"));
-        const adsList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        const adsList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Ad[]; // 🔥 تحويل البيانات إلى النوع Ad
         setAds(adsList);
       } catch (error) {
         console.error("خطأ في جلب الإعلانات:", error);
@@ -26,7 +40,6 @@ export default function MyAds() {
     fetchAds();
   }, []);
 
-  // ✅ حذف الإعلان من Firestore
   const deleteAd = async (id: string) => {
     try {
       await deleteDoc(doc(db, "ads", id));
@@ -51,7 +64,7 @@ export default function MyAds() {
           <p className="text-center text-gray-500 dark:text-gray-400 mt-6">❌ لا توجد إعلانات حاليًا.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            {ads.map((ad) => (
+            {ads.map((ad: Ad) => ( // ✅ تحديد نوع الإعلان
               <motion.div
                 key={ad.id}
                 className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-md"

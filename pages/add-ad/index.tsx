@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
+import Image from "next/image"; // ✅ استيراد Image من Next.js
 
 type FormData = {
   title: string;
@@ -97,7 +98,13 @@ export default function AddListing() {
           <div className="flex mt-2 flex-wrap">
             {images.map((image, index) => (
               <div key={index} className="relative">
-                <img src={URL.createObjectURL(image)} className="w-16 h-16 object-cover mr-2 rounded-md border" />
+                <Image 
+                  src={URL.createObjectURL(image)} 
+                  alt={`صورة ${index + 1}`} 
+                  width={64} 
+                  height={64} 
+                  className="w-16 h-16 object-cover mr-2 rounded-md border"
+                />
               </div>
             ))}
           </div>

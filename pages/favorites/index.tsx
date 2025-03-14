@@ -1,16 +1,25 @@
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { db } from "@/utils/firebaseConfig";
 import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
+// واجهة بيانات الإعلان
+interface Ad {
+  id: string;
+  title: string;
+  description?: string;
+  image?: string;
+}
+
 export default function Favorites() {
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<Ad[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const auth = getAuth();
 
+  // التحقق من تسجيل دخول المستخدم
   useEffect(() => {
-    // التحقق من تسجيل دخول المستخدم
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
@@ -22,24 +31,24 @@ export default function Favorites() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]); // ✅ إضافة auth إلى التبعيات
 
+  // جلب الإعلانات المفضلة عند تغير userId
   useEffect(() => {
     if (userId) {
       fetchFavorites(userId);
     }
   }, [userId]);
 
-  // جلب الإعلانات المفضلة من Firestore
   const fetchFavorites = async (userId: string) => {
     try {
       setLoading(true);
       const favCollection = collection(db, "users", userId, "favorites");
       const querySnapshot = await getDocs(favCollection);
-      const favData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const favData: Ad[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data() as Omit<Ad, "id">; // إزالة id من البيانات القادمة من Firestore
+        return { id: doc.id, ...data }; // إضافة id من Firestore
+      });
       setFavorites(favData);
     } catch (error) {
       console.error("❌ خطأ في جلب المفضلات:", error);
@@ -48,7 +57,6 @@ export default function Favorites() {
     }
   };
 
-  // إزالة إعلان من المفضلة
   const removeFavorite = async (id: string) => {
     if (!userId) return;
     try {
@@ -72,7 +80,15 @@ export default function Favorites() {
           {favorites.map((ad) => (
             <div key={ad.id} className="bg-gray-800 p-5 rounded-lg shadow-lg">
               {ad.image ? (
-                <img src={ad.image} alt={ad.title} className="w-full h-40 object-cover rounded-lg mb-4" />
+                <Image
+                  src={ad.image}
+                  alt={ad.title}
+                  width={300}
+                  height={200}
+                  objectFit="cover"
+                  className="rounded-lg mb-4"
+                  unoptimized // ✅ إضافة unoptimized لحل مشكلة Next.js مع الصور الخارجية
+                />
               ) : (
                 <div className="w-full h-40 bg-gray-700 flex items-center justify-center rounded-lg mb-4">
                   📷 لا توجد صورة

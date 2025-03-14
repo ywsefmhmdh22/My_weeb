@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { db, auth, storage } from "@/utils/firebaseConfig";
+import { db, storage } from "@/utils/firebaseConfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAuth, onAuthStateChanged, updateEmail, updatePassword } from "firebase/auth";
+import Image from "next/image";
 
 export default function ProfileSettings() {
   const [profileImage, setProfileImage] = useState("/default-avatar.png");
@@ -26,7 +27,7 @@ export default function ProfileSettings() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProfileData = async (userId: string) => {
     try {
@@ -91,7 +92,7 @@ export default function ProfileSettings() {
 
       <div className="flex flex-col items-center">
         <label htmlFor="upload-avatar" className="cursor-pointer">
-          <img src={profileImage} alt="Profile" className="w-32 h-32 rounded-full border-4 border-gray-400 mb-4" />
+          <Image src={profileImage} alt="Profile" width={128} height={128} className="rounded-full border-4 border-gray-400 mb-4" />
         </label>
         <input id="upload-avatar" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
       </div>

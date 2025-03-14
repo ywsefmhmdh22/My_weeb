@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
@@ -32,7 +33,10 @@ export default function Home() {
     try {
       setLoading(true);
       const adsRef = collection(db, "ads");
-      let q = selectedCategory ? query(adsRef, where("category", "==", selectedCategory)) : adsRef;
+
+      // ✅ تعديل تعريف q ليكون const بدلاً من let
+      const q = selectedCategory ? query(adsRef, where("category", "==", selectedCategory)) : adsRef;
+
       const snapshot = await getDocs(q);
       const adList = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -121,11 +125,16 @@ export default function Home() {
             ads.map((ad) => (
               <Link key={ad.id} href={`/ad/${ad.id}`}>
                 <div className="bg-white p-4 rounded shadow-md cursor-pointer">
-                  <img
+                  
+                  {/* ✅ استبدال <img> بـ <Image> لتحسين سرعة تحميل الصور */}
+                  <Image
                     src={ad.imageUrl || "https://via.placeholder.com/150"}
                     alt="إعلان"
+                    width={300}
+                    height={200}
                     className="w-full h-40 object-cover rounded"
                   />
+                  
                   <h3 className="mt-2 font-bold">📌 {ad.title}</h3>
                   <p className="text-gray-600">{ad.description}</p>
                   <button className="mt-2 bg-blue-600 text-white px-4 py-2 rounded">

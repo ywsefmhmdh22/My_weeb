@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { FiLock, FiUnlock } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { db } from "@/utils/firebaseConfig";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 
-// تعريف نوع المستخدم لتفادي أخطاء TypeScript
+// تعريف نوع المستخدم لتجنب استخدام any
 type User = {
   id: string;
   name?: string;
@@ -18,7 +17,6 @@ type User = {
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const router = useRouter();
 
   // ✅ جلب المستخدمين من Firestore عند تحميل الصفحة
   useEffect(() => {
@@ -26,10 +24,10 @@ export default function UsersPage() {
       try {
         const usersCollection = collection(db, "users");
         const userSnapshot = await getDocs(usersCollection);
-        const usersList = userSnapshot.docs.map((doc) => ({
+        const usersList: User[] = userSnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data(),
-        })) as User[];
+          ...(doc.data() as Omit<User, "id">), // تحويل البيانات إلى النوع المناسب
+        }));
 
         setUsers(usersList);
       } catch (error) {
