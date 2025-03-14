@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
 
@@ -9,54 +9,52 @@ export default function Home() {
   const [categories, setCategories] = useState<{ id: string; name: string; icon?: string }[]>([]);
   const [ads, setAds] = useState<{ id: string; title: string; description: string; imageUrl?: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const categoriesRef = collection(db, "categories");
-        const snapshot = await getDocs(categoriesRef);
-        const categoryList = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || "بدون اسم",
-            icon: data.icon ? data.icon.toString() : "📁", // ✅ تحويل الرقم إلى نص
-          };
-        });
-        setCategories(categoryList);
-      } catch (error) {
-        console.error("❌ خطأ في جلب الفئات:", error);
-      }
-    };
-
-    fetchCategories();
+  // تحميل الفئات من Firebase
+  const fetchCategories = useCallback(async () => {
+    try {
+      const categoriesRef = collection(db, "categories");
+      const snapshot = await getDocs(categoriesRef);
+      const categoryList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || "بدون اسم",
+        icon: doc.data().icon?.toString() || "📁",
+      }));
+      setCategories(categoryList);
+    } catch (error) {
+      console.error("❌ خطأ في جلب الفئات:", error);
+    }
   }, []);
 
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        const adsRef = collection(db, "ads");
-        let q = selectedCategory ? query(adsRef, where("category", "==", selectedCategory)) : adsRef;
-        const snapshot = await getDocs(q);
-
-        const adList = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title || "إعلان بدون عنوان",
-            description: data.description || "لا يوجد وصف متاح.",
-            imageUrl: data.imageUrl || "https://via.placeholder.com/150",
-          };
-        });
-
-        setAds(adList);
-      } catch (error) {
-        console.error("❌ خطأ في جلب الإعلانات:", error);
-      }
-    };
-
-    fetchAds();
+  // تحميل الإعلانات من Firebase
+  const fetchAds = useCallback(async () => {
+    try {
+      setLoading(true);
+      const adsRef = collection(db, "ads");
+      let q = selectedCategory ? query(adsRef, where("category", "==", selectedCategory)) : adsRef;
+      const snapshot = await getDocs(q);
+      const adList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        title: doc.data().title || "إعلان بدون عنوان",
+        description: doc.data().description || "لا يوجد وصف متاح.",
+        imageUrl: doc.data().imageUrl || "https://via.placeholder.com/150",
+      }));
+      setAds(adList);
+    } catch (error) {
+      console.error("❌ خطأ في جلب الإعلانات:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [selectedCategory]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    fetchAds();
+  }, [fetchAds]);
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -117,7 +115,9 @@ export default function Home() {
         </aside>
 
         <main className="w-3/4 grid grid-cols-3 gap-4 ml-4">
-          {ads.length > 0 ? (
+          {loading ? (
+            <p className="text-gray-500 col-span-3 text-center">⏳ جاري تحميل الإعلانات...</p>
+          ) : ads.length > 0 ? (
             ads.map((ad) => (
               <Link key={ad.id} href={`/ad/${ad.id}`}>
                 <div className="bg-white p-4 rounded shadow-md cursor-pointer">

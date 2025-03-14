@@ -17,19 +17,19 @@ export default function AddListing() {
   const router = useRouter();
 
   useEffect(() => {
-    // ✅ استرجاع نوع الحساب من الـ localStorage (أو API في المستقبل)
-    const accountType = localStorage.getItem("accountType") as "personal" | "business";
-    setUserType(accountType);
-    
-    if (!accountType) {
-      alert("يرجى تسجيل الدخول أولًا!");
-      router.push("/login"); // ✅ توجيه غير المسجلين إلى صفحة تسجيل الدخول
+    if (typeof window !== "undefined") {
+      const accountType = localStorage.getItem("accountType") as "personal" | "business" | null;
+      setUserType(accountType);
+      
+      if (!accountType) {
+        alert("يرجى تسجيل الدخول أولًا!");
+        router.push("/login");
+      }
     }
-  }, []);
+  }, [router]);
 
   const onSubmit = async (data: FormData) => {
     if (userType === "personal") {
-      // ✅ تفعيل الدفع قبل النشر للحسابات الشخصية
       const confirmPayment = window.confirm("💰 يجب الدفع لنشر الإعلان، هل ترغب في المتابعة؟");
       if (!confirmPayment) return;
     }
@@ -40,7 +40,9 @@ export default function AddListing() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files).filter(
+      (file) => !images.some((img) => img.name === file.name)
+    );
     setImages((prev) => [...prev, ...files]);
   };
 
