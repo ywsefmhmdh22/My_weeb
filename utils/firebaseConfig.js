@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc } from "firebase/firestore"; // ✅ استيراد doc
-import { getStorage } from "firebase/storage";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore"; 
+import { getStorage } from "firebase/storage"; // ✅ استيراد التخزين
 
 const firebaseConfig = {
   apiKey: "AIzaSyAes1Jp55lBihDdsB5A1oIilupPMls78oM",
@@ -16,6 +16,7 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
+const storage = getStorage(app); // ✅ تعريف storage قبل التصدير
 
-export { app, auth, db, storage, doc }; // ✅ تصدير doc
+// ✅ تأكد إنك بتصدّر storage مع باقي العناصر
+export { app, auth, db, doc, getDoc, setDoc, storage };
